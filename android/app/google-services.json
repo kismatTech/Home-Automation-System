@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "242354888660",
+    "project_id": "homeautomation-ee5cd",
+    "storage_bucket": "homeautomation-ee5cd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:242354888660:android:9bab0fe909880d91780041",
+        "android_client_info": {
+          "package_name": "com.example.home_automation"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyChw85-Ysf05Ji8PZcK73BZJAtzVdr1xrc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

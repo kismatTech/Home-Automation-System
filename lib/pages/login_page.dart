@@ -25,12 +25,13 @@ class LoginPage extends StatelessWidget {
               const SizedBox(height: 50),
 
               // logo
-              const Icon(
-                Icons.lock,
-                size: 100,
+              Image.asset(
+                'lib/icons/kt.png', // Path to your logo
+                width: 150, // Adjust width as needed
+                height: 150, // Adjust height as needed
               ),
-
-              const SizedBox(height: 50),
+              
+              const SizedBox(height: 10),
 
               // welcome back, you've been missed!
               Text(

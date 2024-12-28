@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:smarthomeui/util/smart_device_box.dart';
+import 'package:homeautomation/util/smart_device_box.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

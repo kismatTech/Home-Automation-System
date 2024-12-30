@@ -1,22 +1,54 @@
 import 'package:flutter/material.dart';
+import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:homeautomation/components/my_button.dart';
 import 'package:homeautomation/components/my_textfield.dart';
 import 'package:homeautomation/components/square_tile.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   LoginPage({super.key});
 
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
   // text editing controllers
   final emailController = TextEditingController();
+
   final passwordController = TextEditingController();
 
   // sign user in method
-  void signUserIn() async{
-    await FirebaseAuth.instance.signInWithEmailAndPassword(
-      email: emailController.text,
-      password: passwordController.text,
+  void signUserIn() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      },
     );
+
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: emailController.text,
+        password: passwordController.text,
+      );
+      Navigator.pop(context);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        Navigator.pop(context);
+        WrongEmailMessage(context);
+
+        // print('No user found for that email.');
+      } else if (e.code == 'wrong-password') {
+        WrongPasswordMessage(context);
+
+        // print('Wrong password provided for that user.');
+      }
+        Navigator.pop(context);
+    }
   }
 
   @override
@@ -36,7 +68,7 @@ class LoginPage extends StatelessWidget {
                 width: 150, // Adjust width as needed
                 height: 150, // Adjust height as needed
               ),
-              
+
               const SizedBox(height: 10),
 
               // welcome back, you've been missed!
@@ -160,5 +192,26 @@ class LoginPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void WrongEmailMessage(BuildContext context) {
+  AwesomeDialog(
+    context: context,
+    dialogType: DialogType.error,
+    animType: AnimType.rightSlide,
+    title: 'Error',
+    desc: 'Email Error',
+  ).show();
+}
+
+
+  void WrongPasswordMessage(BuildContext context) {
+    AwesomeDialog(
+      context: context,
+      dialogType: DialogType.error,
+      animType: AnimType.rightSlide,
+      title: 'Error',
+      desc: 'Wrong Password',
+    ).show();
   }
 }

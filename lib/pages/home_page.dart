@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:homeautomation/util/smart_device_box.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -22,7 +23,7 @@ class _HomePageState extends State<HomePage> {
     ["Smart TV", "lib/icons/smart-tv.png", false],
     ["Smart Fan", "lib/icons/fan.png", false],
   ];
-
+  
   // power button switched
   void powerSwitchChanged(bool value, int index) {
     setState(() {
@@ -33,6 +34,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      
       backgroundColor: Colors.grey[300],
       body: SafeArea(
         child: Column(
@@ -55,11 +57,17 @@ class _HomePageState extends State<HomePage> {
                   ),
 
                   // account icon
-                  Icon(
-                    Icons.person,
-                    size: 45,
-                    color: Colors.grey[800],
-                  )
+                  IconButton(
+                    onPressed: signUserOut, // Calls signUserOut when pressed
+                    icon: Icon(Icons.logout), // Logout icon
+                    iconSize: 40, // Icon size (optional)
+                    color: Colors.grey[800], // Icon color (optional)
+                  ),
+                  // Icon(
+                  //   Icons.person,
+                  //   size: 45,
+                  //   color: Colors.grey[800],
+                  // )
                 ],
               ),
             ),
@@ -134,5 +142,9 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
+  }
+
+  void signUserOut() {
+    FirebaseAuth.instance.signOut();
   }
 }

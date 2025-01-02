@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:homeautomation/components/my_button.dart';
 import 'package:homeautomation/components/my_textfield.dart';
 import 'package:homeautomation/components/square_tile.dart';
+import 'dialogbox.dart';
 
 class LoginPage extends StatefulWidget {
   LoginPage({super.key});
@@ -17,6 +18,29 @@ class _LoginPageState extends State<LoginPage> {
   final emailController = TextEditingController();
 
   final passwordController = TextEditingController();
+
+  void WrongEmailMessage(BuildContext context) {
+  AwesomeDialog(
+            context: context,
+            dialogType: DialogType.error,
+            animType: AnimType.rightSlide,
+            title: 'Error',
+            desc: 'Dialog description here.............',
+            btnCancelOnPress: () {},
+            btnOkOnPress: () {},
+            )..show();
+}
+
+
+  void WrongPasswordMessage(BuildContext context) {
+    AwesomeDialog(
+      context: context,
+      dialogType: DialogType.error,
+      animType: AnimType.rightSlide,
+      title: 'Error',
+      desc: 'Wrong Password',
+    ).show();
+  }
 
   // sign user in method
   void signUserIn() async {
@@ -38,8 +62,8 @@ class _LoginPageState extends State<LoginPage> {
       Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {
-        Navigator.pop(context);
         WrongEmailMessage(context);
+        Navigator.pop(context);
 
         // print('No user found for that email.');
       } else if (e.code == 'wrong-password') {
@@ -50,6 +74,7 @@ class _LoginPageState extends State<LoginPage> {
         Navigator.pop(context);
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -194,24 +219,4 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  void WrongEmailMessage(BuildContext context) {
-  AwesomeDialog(
-    context: context,
-    dialogType: DialogType.error,
-    animType: AnimType.rightSlide,
-    title: 'Error',
-    desc: 'Email Error',
-  ).show();
-}
-
-
-  void WrongPasswordMessage(BuildContext context) {
-    AwesomeDialog(
-      context: context,
-      dialogType: DialogType.error,
-      animType: AnimType.rightSlide,
-      title: 'Error',
-      desc: 'Wrong Password',
-    ).show();
-  }
 }

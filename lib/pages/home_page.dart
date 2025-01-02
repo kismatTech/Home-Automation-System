@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:homeautomation/util/smart_device_box.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -11,6 +12,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref("smart_devices");
   // padding constants
   final double horizontalPadding = 40;
   final double verticalPadding = 25;
@@ -23,14 +25,42 @@ class _HomePageState extends State<HomePage> {
     ["Smart TV", "lib/icons/smart-tv.png", false],
     ["Smart Fan", "lib/icons/fan.png", false],
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _syncWithFirebase();
+  }
+
+  // Sync with Firebase
+  void _syncWithFirebase() async {
+    final snapshot = await _dbRef.get();
+    if (snapshot.exists) {
+      final data = snapshot.value as Map;
+      setState(() {
+        for (int i = 0; i < mySmartDevices.length; i++) {
+          if (data.containsKey(mySmartDevices[i][0])) {
+            mySmartDevices[i][2] = data[mySmartDevices[i][0]] as bool;
+          }
+        }
+      });
+    }
+  }
   
   // power button switched
   void powerSwitchChanged(bool value, int index) {
     setState(() {
       mySmartDevices[index][2] = value;
     });
-  }
 
+  // Update the Firebase Realtime Database
+    _dbRef.child(mySmartDevices[index][0]).set(value).then((_) {
+      print("Updated ${mySmartDevices[index][0]} in Firebase.");
+    }).catchError((error) {
+      print("Failed to update Firebase: $error");
+    });
+  }
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(

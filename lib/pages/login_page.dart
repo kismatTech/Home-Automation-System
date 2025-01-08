@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:homeautomation/components/my_button.dart';
 import 'package:homeautomation/components/my_textfield.dart';
 import 'package:homeautomation/components/square_tile.dart';
+import 'package:homeautomation/pages/signup_page.dart';
 import 'dialogbox.dart';
 
 class LoginPage extends StatefulWidget {
@@ -19,28 +20,26 @@ class _LoginPageState extends State<LoginPage> {
 
   final passwordController = TextEditingController();
 
-  void WrongEmailMessage(BuildContext context) {
-  AwesomeDialog(
-            context: context,
-            dialogType: DialogType.error,
-            animType: AnimType.rightSlide,
-            title: 'Error',
-            desc: 'Dialog description here.............',
-            btnCancelOnPress: () {},
-            btnOkOnPress: () {},
-            )..show();
-}
-
-
-  void WrongPasswordMessage(BuildContext context) {
-    AwesomeDialog(
-      context: context,
-      dialogType: DialogType.error,
-      animType: AnimType.rightSlide,
-      title: 'Error',
-      desc: 'Wrong Password',
-    ).show();
-  }
+//   void WrongEmailMessage(BuildContext context) {
+//   AwesomeDialog(
+//             context: context,
+//             dialogType: DialogType.error,
+//             animType: AnimType.rightSlide,
+//             title: 'Error',
+//             desc: 'Dialog description here.............',
+//             btnCancelOnPress: () {},
+//             btnOkOnPress: () {},
+//             )..show();
+// }
+//   void WrongPasswordMessage(BuildContext context) {
+//     AwesomeDialog(
+//       context: context,
+//       dialogType: DialogType.error,
+//       animType: AnimType.rightSlide,
+//       title: 'Error',
+//       desc: 'Wrong Password',
+//     ).show();
+//   }
 
   // sign user in method
   void signUserIn() async {
@@ -62,19 +61,18 @@ class _LoginPageState extends State<LoginPage> {
       Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {
-        WrongEmailMessage(context);
+        // WrongEmailMessage(context);
         Navigator.pop(context);
 
         // print('No user found for that email.');
       } else if (e.code == 'wrong-password') {
-        WrongPasswordMessage(context);
+        // WrongPasswordMessage(context);
 
         // print('Wrong password provided for that user.');
       }
-        Navigator.pop(context);
+      Navigator.pop(context);
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +87,7 @@ class _LoginPageState extends State<LoginPage> {
 
               // logo
               Image.asset(
-                'lib/icons/kt.png', // Path to your logo
+                'lib/icons/homeautomation.jpg', // Path to your logo
                 width: 150, // Adjust width as needed
                 height: 150, // Adjust height as needed
               ),
@@ -144,6 +142,14 @@ class _LoginPageState extends State<LoginPage> {
               // sign in button
               MyButton(
                 onTap: signUserIn,
+                child: const Text(
+                  'Sign In',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
               ),
 
               const SizedBox(height: 50),
@@ -198,16 +204,23 @@ class _LoginPageState extends State<LoginPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    'Not a member?',
-                    style: TextStyle(color: Colors.grey[700]),
+                  Text('Not a member? ',
+                  style: TextStyle(color: Colors.grey[700]),
                   ),
-                  const SizedBox(width: 4),
-                  const Text(
-                    'Register now',
-                    style: TextStyle(
-                      color: Colors.blue,
-                      fontWeight: FontWeight.bold,
+                  GestureDetector(
+                    onTap: () {
+                      // Navigate to the Login Page
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => SignupPage()),
+                      );
+                    },
+                    child: const Text(
+                      'Sign Up',
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -218,5 +231,4 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-
 }

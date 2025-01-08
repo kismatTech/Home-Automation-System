@@ -12,18 +12,19 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref("smart_devices");
+  final DatabaseReference _dbRef =
+      FirebaseDatabase.instance.ref("smart_devices");
   // padding constants
   final double horizontalPadding = 40;
   final double verticalPadding = 25;
-
+  final user = FirebaseAuth.instance.currentUser;
   // list of smart devices
   List mySmartDevices = [
-    // [ smartDeviceName, iconPath , powerStatus ]
-    ["Smart Light", "lib/icons/light-bulb.png", true],
-    ["Smart AC", "lib/icons/air-conditioner.png", false],
-    ["Smart TV", "lib/icons/smart-tv.png", false],
-    ["Smart Fan", "lib/icons/fan.png", false],
+    // [ smartDeviceName, iconPath , powerStatus, databaseKey ]
+    ["Smart Light", "lib/icons/light-bulb.png", true, "L1"],
+    ["Smart AC", "lib/icons/air-conditioner.png", false, "L2"],
+    ["Smart TV", "lib/icons/smart-tv.png", false, "L3"],
+    ["Smart Fan", "lib/icons/fan.png", false, "L4"],
   ];
 
   @override
@@ -39,32 +40,35 @@ class _HomePageState extends State<HomePage> {
       final data = snapshot.value as Map;
       setState(() {
         for (int i = 0; i < mySmartDevices.length; i++) {
-          if (data.containsKey(mySmartDevices[i][0])) {
-            mySmartDevices[i][2] = data[mySmartDevices[i][0]] as bool;
+          String key = mySmartDevices[i][3]; // Get the databaseKey
+          if (data.containsKey(key)) {
+            mySmartDevices[i][2] = data[key] ==
+                1; // Update powerStatus based on the database value
           }
         }
       });
     }
   }
-  
+
   // power button switched
   void powerSwitchChanged(bool value, int index) {
     setState(() {
       mySmartDevices[index][2] = value;
     });
 
-  // Update the Firebase Realtime Database
-    _dbRef.child(mySmartDevices[index][0]).set(value).then((_) {
+    String key = mySmartDevices[index][3]; // Get the databaseKey
+    int firebaseValue = value ? 1 : 0; // Convert boolean to 1 or 0 for Firebase
+
+    _dbRef.child(key).set(firebaseValue).then((_) {
       print("Updated ${mySmartDevices[index][0]} in Firebase.");
     }).catchError((error) {
       print("Failed to update Firebase: $error");
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      
       backgroundColor: Colors.grey[300],
       body: SafeArea(
         child: Column(
@@ -114,9 +118,8 @@ class _HomePageState extends State<HomePage> {
                     "Welcome Home,",
                     style: TextStyle(fontSize: 20, color: Colors.grey.shade800),
                   ),
-                  Text(
-                    'Kismat Duwadi',
-                    style: GoogleFonts.bebasNeue(fontSize: 68),
+                  Text('${user!.email}',
+                    style: GoogleFonts.bebasNeue(fontSize: 30),
                   ),
                 ],
               ),

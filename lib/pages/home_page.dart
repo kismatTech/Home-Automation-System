@@ -27,6 +27,8 @@ class _HomePageState extends State<HomePage> {
     ["Smart Fan", "lib/icons/fan.png", false, "L4"],
   ];
 
+  int _selectedIndex = 0;
+
   @override
   void initState() {
     super.initState();
@@ -42,8 +44,7 @@ class _HomePageState extends State<HomePage> {
         for (int i = 0; i < mySmartDevices.length; i++) {
           String key = mySmartDevices[i][3]; // Get the databaseKey
           if (data.containsKey(key)) {
-            mySmartDevices[i][2] = data[key] ==
-                1; // Update powerStatus based on the database value
+            mySmartDevices[i][2] = data[key] == 1; // Update powerStatus
           }
         }
       });
@@ -89,7 +90,6 @@ class _HomePageState extends State<HomePage> {
                     height: 45,
                     color: Colors.grey[800],
                   ),
-
                   // account icon
                   IconButton(
                     onPressed: signUserOut, // Calls signUserOut when pressed
@@ -97,11 +97,6 @@ class _HomePageState extends State<HomePage> {
                     iconSize: 40, // Icon size (optional)
                     color: Colors.grey[800], // Icon color (optional)
                   ),
-                  // Icon(
-                  //   Icons.person,
-                  //   size: 45,
-                  //   color: Colors.grey[800],
-                  // )
                 ],
               ),
             ),
@@ -118,7 +113,8 @@ class _HomePageState extends State<HomePage> {
                     "Welcome Home,",
                     style: TextStyle(fontSize: 20, color: Colors.grey.shade800),
                   ),
-                  Text('${user!.email}',
+                  Text(
+                    '${user!.email}',
                     style: GoogleFonts.bebasNeue(fontSize: 30),
                   ),
                 ],
@@ -170,9 +166,40 @@ class _HomePageState extends State<HomePage> {
                   );
                 },
               ),
-            )
+            ),
           ],
         ),
+      ),
+      bottomNavigationBar: NavigationBar(
+        animationDuration: const Duration(seconds: 1),
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home_rounded),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.timer_outlined),
+            selectedIcon: Icon(Icons.timer_rounded),
+            label: ' Set Timer',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.power_settings_new_outlined),
+            selectedIcon: Icon(Icons.power_settings_new_sharp),
+            label: 'Power Usage',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline_rounded),
+            selectedIcon: Icon(Icons.person_rounded),
+            label: 'Profile',
+          ),
+        ],
       ),
     );
   }

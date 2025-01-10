@@ -3,6 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:homeautomation/util/smart_device_box.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'profile.dart';
+import 'timmer.dart';
+import 'power_usages.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -12,22 +15,21 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final DatabaseReference _dbRef =
-      FirebaseDatabase.instance.ref("smart_devices");
-  // padding constants
+  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref("smart_devices");
+  final user = FirebaseAuth.instance.currentUser;
+  final PageController _pageController = PageController(); // PageController initialization
+  int _selectedIndex = 0;
+
+  // Padding constants
   final double horizontalPadding = 40;
   final double verticalPadding = 25;
-  final user = FirebaseAuth.instance.currentUser;
-  // list of smart devices
+
   List mySmartDevices = [
-    // [ smartDeviceName, iconPath , powerStatus, databaseKey ]
     ["Smart Light", "lib/icons/light-bulb.png", true, "L1"],
     ["Smart AC", "lib/icons/air-conditioner.png", false, "L2"],
     ["Smart TV", "lib/icons/smart-tv.png", false, "L3"],
     ["Smart Fan", "lib/icons/fan.png", false, "L4"],
   ];
-
-  int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -51,7 +53,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // power button switched
+  // Power button switch handler
   void powerSwitchChanged(bool value, int index) {
     setState(() {
       mySmartDevices[index][2] = value;
@@ -70,105 +72,20 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[300],
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // app bar
-            Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: horizontalPadding,
-                vertical: verticalPadding,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // menu icon
-                  Image.asset(
-                    'lib/icons/menu.png',
-                    height: 45,
-                    color: Colors.grey[800],
-                  ),
-                  // account icon
-                  IconButton(
-                    onPressed: signUserOut, // Calls signUserOut when pressed
-                    icon: Icon(Icons.logout), // Logout icon
-                    iconSize: 40, // Icon size (optional)
-                    color: Colors.grey[800], // Icon color (optional)
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // welcome home
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Welcome Home,",
-                    style: TextStyle(fontSize: 20, color: Colors.grey.shade800),
-                  ),
-                  Text(
-                    '${user!.email}',
-                    style: GoogleFonts.bebasNeue(fontSize: 30),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 25),
-
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 40.0),
-              child: Divider(
-                thickness: 1,
-                color: Color.fromARGB(255, 204, 204, 204),
-              ),
-            ),
-
-            const SizedBox(height: 25),
-
-            // smart devices grid
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-              child: Text(
-                "Smart Devices",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24,
-                  color: Colors.grey.shade800,
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-
-            // grid
-            Expanded(
-              child: GridView.builder(
-                itemCount: 4,
-                physics: const NeverScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 25),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 1 / 1.3,
-                ),
-                itemBuilder: (context, index) {
-                  return SmartDeviceBox(
-                    smartDeviceName: mySmartDevices[index][0],
-                    iconPath: mySmartDevices[index][1],
-                    powerOn: mySmartDevices[index][2],
-                    onChanged: (value) => powerSwitchChanged(value, index),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+      // backgroundColor: Colors.grey[300],
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        children: [
+          buildHomePage(),
+          TimerPage(),
+          PowerUsagesPage(),
+          ProfilePage(),
+        ],
       ),
       bottomNavigationBar: NavigationBar(
         animationDuration: const Duration(seconds: 1),
@@ -177,6 +94,7 @@ class _HomePageState extends State<HomePage> {
           setState(() {
             _selectedIndex = index;
           });
+          _pageController.jumpToPage(index);
         },
         destinations: const [
           NavigationDestination(
@@ -187,7 +105,7 @@ class _HomePageState extends State<HomePage> {
           NavigationDestination(
             icon: Icon(Icons.timer_outlined),
             selectedIcon: Icon(Icons.timer_rounded),
-            label: ' Set Timer',
+            label: 'Set Timer',
           ),
           NavigationDestination(
             icon: Icon(Icons.power_settings_new_outlined),
@@ -198,6 +116,106 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(Icons.person_outline_rounded),
             selectedIcon: Icon(Icons.person_rounded),
             label: 'Profile',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildHomePage() {
+    return SafeArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // App bar
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: verticalPadding,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Image.asset(
+                  'lib/icons/menu.png',
+                  height: 45,
+                  color: Colors.grey[800],
+                ),
+                IconButton(
+                  onPressed: signUserOut,
+                  icon: const Icon(Icons.logout),
+                  iconSize: 40,
+                  color: Colors.grey[800],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Welcome home
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Welcome Home,",
+                  style: TextStyle(fontSize: 20, color: Colors.grey.shade800),
+                ),
+                Text(
+                  '${user!.email}',
+                  style: GoogleFonts.bebasNeue(fontSize: 30),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 25),
+
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 40.0),
+            child: Divider(
+              thickness: 1,
+              color: Color.fromARGB(255, 204, 204, 204),
+            ),
+          ),
+
+          const SizedBox(height: 25),
+
+          // Smart devices
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+            child: Text(
+              "Smart Devices",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+                color: Colors.grey.shade800,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Grid view
+          Expanded(
+            child: GridView.builder(
+              itemCount: mySmartDevices.length,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 25),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 1 / 1.3,
+              ),
+              itemBuilder: (context, index) {
+                return SmartDeviceBox(
+                  smartDeviceName: mySmartDevices[index][0],
+                  iconPath: mySmartDevices[index][1],
+                  powerOn: mySmartDevices[index][2],
+                  onChanged: (value) => powerSwitchChanged(value, index),
+                );
+              },
+            ),
           ),
         ],
       ),

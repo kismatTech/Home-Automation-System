@@ -1,15 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Timer App',
-      home: TimerPage(),
-    );
-  }
-}
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class TimerPage extends StatefulWidget {
   @override
@@ -20,13 +13,52 @@ class _TimerPageState extends State<TimerPage> {
   int _selectedHours = 0;
   int _selectedMinutes = 0;
   int _selectedSeconds = 0;
-  int _remainingTime = 0; // Total time in seconds
+  int _remainingTime = 0;
   Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTimerState();
+  }
 
   @override
   void dispose() {
     _timer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _loadTimerState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final startTime = prefs.getInt('start_time') ?? 0;
+    final duration = prefs.getInt('duration') ?? 0;
+
+    if (startTime > 0 && duration > 0) {
+      final elapsed = DateTime.now().millisecondsSinceEpoch ~/ 1000 - startTime;
+      final remaining = duration - elapsed;
+
+      if (remaining > 0) {
+        setState(() {
+          _remainingTime = remaining;
+        });
+        _startCountdown();
+      } else {
+        _clearTimerState();
+      }
+    }
+  }
+
+  Future<void> _saveTimerState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final currentTime = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    await prefs.setInt('start_time', currentTime);
+    await prefs.setInt('duration', _remainingTime);
+  }
+
+  Future<void> _clearTimerState() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('start_time');
+    await prefs.remove('duration');
   }
 
   void _startTimer() {
@@ -39,28 +71,37 @@ class _TimerPageState extends State<TimerPage> {
     });
 
     if (_remainingTime > 0) {
-      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        setState(() {
-          if (_remainingTime > 0) {
-            _remainingTime--;
-          } else {
-            timer.cancel();
-          }
-        });
-      });
+      _saveTimerState();
+      _startCountdown();
     }
+  }
+
+  void _startCountdown() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        if (_remainingTime > 0) {
+          _remainingTime--;
+          _saveTimerState();
+        } else {
+          timer.cancel();
+          _clearTimerState();
+        }
+      });
+    });
   }
 
   void _stopTimer() {
     if (_timer != null && _timer!.isActive) {
       _timer!.cancel();
     }
+    _clearTimerState();
   }
 
   void _resetTimer() {
     if (_timer != null && _timer!.isActive) {
       _timer!.cancel();
     }
+    _clearTimerState();
     setState(() {
       _selectedHours = 0;
       _selectedMinutes = 0;
@@ -80,7 +121,7 @@ class _TimerPageState extends State<TimerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Timer App'),
+        title: const Text('Timer'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -95,7 +136,6 @@ class _TimerPageState extends State<TimerPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Dropdown for Hours
                 DropdownButton<int>(
                   value: _selectedHours,
                   items: List.generate(24, (index) => index).map((hour) {
@@ -111,7 +151,6 @@ class _TimerPageState extends State<TimerPage> {
                   },
                 ),
                 const SizedBox(width: 10),
-                // Dropdown for Minutes
                 DropdownButton<int>(
                   value: _selectedMinutes,
                   items: List.generate(60, (index) => index).map((minute) {
@@ -127,7 +166,6 @@ class _TimerPageState extends State<TimerPage> {
                   },
                 ),
                 const SizedBox(width: 10),
-                // Dropdown for Seconds
                 DropdownButton<int>(
                   value: _selectedSeconds,
                   items: List.generate(60, (index) => index).map((second) {

@@ -6,6 +6,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'profile.dart';
 import 'timmer.dart';
 import 'power_usages.dart';
+import 'dart:async'; // Required for Timer
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -15,12 +16,13 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref("smart_devices");
+  final DatabaseReference _dbRef =
+      FirebaseDatabase.instance.ref("smart_devices");
   final user = FirebaseAuth.instance.currentUser;
-  final PageController _pageController = PageController(); // PageController initialization
+  final PageController _pageController = PageController();
   int _selectedIndex = 0;
+  Timer? _timer;
 
-  // Padding constants
   final double horizontalPadding = 40;
   final double verticalPadding = 25;
 
@@ -34,17 +36,24 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _syncWithFirebase();
+    _startPeriodicUpdate();
   }
 
-  // Sync with Firebase
-  void _syncWithFirebase() async {
+  // Start a periodic timer to fetch data every 5 seconds (adjustable)
+  void _startPeriodicUpdate() {
+    _timer = Timer.periodic(Duration(milliseconds: 100), (timer) {
+      _fetchDataFromFirebase();
+    });
+  }
+
+  // Fetch data from Firebase and compare with the local data
+  Future<void> _fetchDataFromFirebase() async {
     final snapshot = await _dbRef.get();
     if (snapshot.exists) {
       final data = snapshot.value as Map;
       setState(() {
         for (int i = 0; i < mySmartDevices.length; i++) {
-          String key = mySmartDevices[i][3]; // Get the databaseKey
+          String key = mySmartDevices[i][3]; // Get the database key
           if (data.containsKey(key)) {
             mySmartDevices[i][2] = data[key] == 1; // Update powerStatus
           }
@@ -53,26 +62,37 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Power button switch handler
+  // Handling power switch changes
   void powerSwitchChanged(bool value, int index) {
     setState(() {
       mySmartDevices[index][2] = value;
     });
 
-    String key = mySmartDevices[index][3]; // Get the databaseKey
-    int firebaseValue = value ? 1 : 0; // Convert boolean to 1 or 0 for Firebase
+    String key = mySmartDevices[index][3]; // Firebase key for the device
+    int firebaseValue = value ? 1 : 0;
 
     _dbRef.child(key).set(firebaseValue).then((_) {
       print("Updated ${mySmartDevices[index][0]} in Firebase.");
     }).catchError((error) {
-      print("Failed to update Firebase: $error");
+      setState(() {
+        mySmartDevices[index][2] =
+            !value; // Revert the toggle state if update fails
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("Failed to update ${mySmartDevices[index][0]}: $error"),
+      ));
     });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel(); // Stop the timer when the widget is disposed
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: Colors.grey[300],
       body: PageView(
         controller: _pageController,
         onPageChanged: (index) {
@@ -127,7 +147,6 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // App bar
           Padding(
             padding: EdgeInsets.symmetric(
               horizontal: horizontalPadding,
@@ -150,10 +169,7 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
           ),
-
           const SizedBox(height: 20),
-
-          // Welcome home
           Padding(
             padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
             child: Column(
@@ -170,9 +186,7 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
           ),
-
           const SizedBox(height: 25),
-
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 40.0),
             child: Divider(
@@ -180,10 +194,7 @@ class _HomePageState extends State<HomePage> {
               color: Color.fromARGB(255, 204, 204, 204),
             ),
           ),
-
           const SizedBox(height: 25),
-
-          // Smart devices
           Padding(
             padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
             child: Text(
@@ -196,8 +207,6 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           const SizedBox(height: 10),
-
-          // Grid view
           Expanded(
             child: GridView.builder(
               itemCount: mySmartDevices.length,
